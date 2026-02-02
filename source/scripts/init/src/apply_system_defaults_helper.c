@@ -695,6 +695,21 @@ int set_syscfg_partner_values (char *pValue, char *param)
 	}
 }
 
+static int isXER10Device(void)
+{
+    char devModel[32] = {0};
+    
+    if (GetDevicePropertiesEntry(devModel, sizeof(devModel), "MODEL_NUM") == 0)
+    {
+        if (strcmp(devModel, "SCER11BEL") == 0)
+        {
+            APPLY_PRINT("%s - SCER11BEL device detected\n", __FUNCTION__);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int GetDevicePropertiesEntry (char *pOutput, int size, char *sDevicePropContent)
 {
    FILE 	*fp1 		 = NULL;
@@ -2403,6 +2418,10 @@ int apply_partnerId_default_values (char *data, char *PartnerID)
                             cJSON *param = partnerObj->child;
                             char  *key   = NULL;
                             char  *value = NULL;
+                            
+                            // For XER10 devices, explicitly handle PSM values
+                            int isXER10 = isXER10Device();
+                            
                             while( param )
                             {
                                 key = param->string;
@@ -2417,6 +2436,13 @@ int apply_partnerId_default_values (char *data, char *PartnerID)
                                     {
                                         //Its PSM entry
                                         APPLY_PRINT("Update psm value %s for param %s\n", value, key);
+                                        
+                                        // For XER10, ensure PSM values are set
+                                        if (isXER10)
+                                        {
+                                            APPLY_PRINT("XER10: Setting PSM value %s for param %s\n", value, key);
+                                        }
+                                        
                                         set_psm_record(key, value);
                                     }
                                 }
