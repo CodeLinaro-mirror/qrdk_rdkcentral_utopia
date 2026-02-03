@@ -695,21 +695,6 @@ int set_syscfg_partner_values (char *pValue, char *param)
 	}
 }
 
-static int isXER10Device(void)
-{
-    char devModel[32] = {0};
-    
-    if (GetDevicePropertiesEntry(devModel, sizeof(devModel), "MODEL_NUM") == 0)
-    {
-        if (strcmp(devModel, "SCER11BEL") == 0)
-        {
-            APPLY_PRINT("%s - SCER11BEL device detected\n", __FUNCTION__);
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static int GetDevicePropertiesEntry (char *pOutput, int size, char *sDevicePropContent)
 {
    FILE 	*fp1 		 = NULL;
@@ -746,6 +731,21 @@ static int GetDevicePropertiesEntry (char *pOutput, int size, char *sDevicePropC
     }
     fclose( fp1 );
     return ret;
+}
+
+static int isXER10Device(void)
+{
+    char devModel[32] = {0};
+    
+    if (GetDevicePropertiesEntry(devModel, sizeof(devModel), "MODEL_NUM") == 0)
+    {
+        if (strcmp(devModel, "SCER11BEL") == 0)
+        {
+            APPLY_PRINT("%s - SCER11BEL device detected\n", __FUNCTION__);
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int getFactoryPartnerId (char *pValue)
@@ -1300,6 +1300,7 @@ static int addParamInPartnersFile (char *pKey, char *PartnerId, char *pValue)
 }
 
 /** ApplyPartnersObjectItemsIntoSysevents() */
+__attribute__((unused))
 static int ApplyPartnersObjectItemsIntoSysevents( char *pcPartnerID )
 {
    if( NULL == pcPartnerID )
