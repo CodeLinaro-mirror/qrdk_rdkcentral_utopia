@@ -1931,7 +1931,7 @@ int init_bootstrap_json (char *partner_nvram_obj, char *partner_etc_obj, char *P
          This allows model-specific parameters like dmsb.* to be added through override section */
       if (overrideObj)
       {
-         APPLY_PRINT("%s - Processing override-only parameters for model %s\n", __FUNCTION__, devModel);
+         APPLY_PRINT("%s:%d - Processing override-only parameters for model %s\n", __FUNCTION__, __LINE__, devModel);
          cJSON *overrideParam = overrideObj->child;
          while (overrideParam)
          {
@@ -1943,7 +1943,7 @@ int init_bootstrap_json (char *partner_nvram_obj, char *partner_etc_obj, char *P
                char *override_value = overrideParam->valuestring;
                if (override_value != NULL)
                {
-                  APPLY_PRINT("%s - Adding override-only parameter: %s = %s\n", __FUNCTION__, override_key, override_value);
+                  APPLY_PRINT("%s:%d - Adding override-only parameter: %s = %s\n", __FUNCTION__, __LINE__, override_key, override_value);
                   
                   cJSON *newOverrideParamObj = cJSON_CreateObject();
                   cJSON_AddStringToObject(newOverrideParamObj, "DefaultValue", override_value);
@@ -1959,7 +1959,7 @@ int init_bootstrap_json (char *partner_nvram_obj, char *partner_etc_obj, char *P
                   {
                      if (psm_supported == 1)
                      {
-                        APPLY_PRINT("Add override PSM value %s for param %s\n", override_value, override_key);
+                        APPLY_PRINT("%s:%d - Add override PSM value %s for param %s\n", __FUNCTION__, __LINE__, override_value, override_key);
                         set_psm_record(override_key, override_value);
                      }
                   }
@@ -2302,7 +2302,7 @@ int compare_partner_json_param (char *partner_nvram_bs_obj, char *partner_etc_ob
          This allows model-specific parameters like dmsb.* to be added through override section */
       if (overrideObj)
       {
-         APPLY_PRINT("%s - Processing override-only parameters for model %s\n", __FUNCTION__, devModel);
+         APPLY_PRINT("%s:%d - Processing override-only parameters for model %s\n", __FUNCTION__, __LINE__, devModel);
          cJSON *overrideParam = overrideObj->child;
          while (overrideParam)
          {
@@ -2314,7 +2314,7 @@ int compare_partner_json_param (char *partner_nvram_bs_obj, char *partner_etc_ob
                char *override_value = overrideParam->valuestring;
                if (override_value != NULL)
                {
-                  APPLY_PRINT("%s - Adding override-only parameter: %s = %s\n", __FUNCTION__, override_key, override_value);
+                  APPLY_PRINT("%s:%d - Adding override-only parameter: %s = %s\n", __FUNCTION__, __LINE__, override_key, override_value);
                   
                   cJSON *bs_obj = cJSON_GetObjectItem(subitem_nvram_bs, override_key);
                   if (bs_obj == NULL)
@@ -2342,7 +2342,7 @@ int compare_partner_json_param (char *partner_nvram_bs_obj, char *partner_etc_ob
                      {
                         if (syscfg_supported == 1)
                         {
-                           APPLY_PRINT("Add override syscfg value %s for param %s\n", override_value, override_key);
+                           APPLY_PRINT("%s:%d - Add override syscfg value %s for param %s\n", __FUNCTION__, __LINE__, override_value, override_key);
                            addParamInPartnersFile(override_key, PartnerID, override_value);
                            set_syscfg_partner_values(override_value, override_key);
                         }
