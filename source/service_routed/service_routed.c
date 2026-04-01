@@ -929,6 +929,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
     unsigned int rdnsslft = 3 * RA_INTERVAL; // as defined in RFC
 #if defined(MULTILAN_FEATURE)
     char orig_lan_prefix[64];
+    ZEBRAGEN_LOG("if MULTILAN_FEATURE local orig_lan_prefix storage enabled");
 #endif
     char m_flag[16], o_flag[16], ra_mtu[16];
     char rec[256], val[512];
@@ -942,6 +943,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
     int inRfCaptivePortal = 0;
     char rfCpMode[6] = {0};
     char rfCpEnable[6] = {0};
+    ZEBRAGEN_LOG("if XB6 captive portal tracking variables enabled");
 #endif
     int nopt, j = 0; /*RDKB-12965 & CID:-34147*/
     char lan_if[IFNAMSIZ];
@@ -956,16 +958,20 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
     unsigned int l2_insts[4] = {0};
     unsigned int enabled_iface_num = 0;
     char evt_name[64] = {0};
+    ZEBRAGEN_LOG("if multilan or prefix delegation interface iteration support enabled");
 #endif
     int  StaticDNSServersEnabled = 0;
 #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_RDKB_GLOBAL_PRODUCT_REQ_)
     char lan_addr_prefix[64] = {0};
+    ZEBRAGEN_LOG("if HUB4 or GLOBAL lan_addr_prefix support enabled");
 #endif
     char wan_st[16] = {0};
 #ifdef RDKB_EXTENDER_ENABLED
+    ZEBRAGEN_LOG("if RDKB_EXTENDER_ENABLED local extender path compiled");
     #if 0
     char meshWanInterface[128] = {0};
     int deviceMode = 0;
+    ZEBRAGEN_LOG("if disabled extender shortcut block retained in source");
     #endif
 #endif
 #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_RDKB_GLOBAL_PRODUCT_REQ_)
@@ -974,6 +980,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
     int result = 0;
     int ipv6_enable = 0;
     int ula_enable = 0;
+    ZEBRAGEN_LOG("if HUB4 or GLOBAL server_type and ULA state locals enabled");
 #endif
 #ifdef WAN_FAILOVER_SUPPORTED
     ZEBRAGEN_LOG("enter gen_zebra_conf sefd=%d setok=%d gIpv6AddrAssignment=%d gModeSwitched=%d", sefd, setok, gIpv6AddrAssignment, gModeSwitched);
@@ -981,6 +988,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
     ZEBRAGEN_LOG("enter gen_zebra_conf sefd=%d setok=%d", sefd, setok);
 #endif
 #ifdef WAN_FAILOVER_SUPPORTED
+    ZEBRAGEN_LOG("if WAN_FAILOVER_SUPPORTED WAN interface locals enabled");
     char default_wan_interface[64] = {0};
     char wan_interface[64] = {0};
 #ifdef FEATURE_RDKB_CONFIGURABLE_WAN_INTERFACE
@@ -1019,6 +1027,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 
 #if defined(_COSA_FOR_BCI_)
     char dhcpv6Enable[8]={0};
+    ZEBRAGEN_LOG("if COSA_FOR_BCI local DHCPv6 enable state enabled");
     // Set bool to determine if dhcpv6 enabled
     syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
     bool bEnabled = (strncmp(dhcpv6Enable,"1",1)==0?true:false);
@@ -1036,7 +1045,9 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
     ZEBRAGEN_LOG("router_adv_enable active ra_en=%s", ra_en);
     
 #ifdef RDKB_EXTENDER_ENABLED
+ZEBRAGEN_LOG("if RDKB_EXTENDER_ENABLED extender early-return block compiled");
 #if 0
+ZEBRAGEN_LOG("if disabled extender early-return code path retained");
 
     memset(buf,0,sizeof(buf));
     if ( 0 == syscfg_get(NULL, "Device_Mode", buf, sizeof(buf)))
@@ -1068,19 +1079,25 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 
 #ifdef WAN_FAILOVER_SUPPORTED
     char last_broadcasted_prefix[64] = {0};
+    ZEBRAGEN_LOG("if WAN_FAILOVER_SUPPORTED last_broadcasted_prefix tracking enabled");
 #endif
 #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if PD or ONESTACK prefix lifetime block compiled");
     #if defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if ONESTACK feature check gates PD lifetime source");
     if (isFeatureSupportedInCurrentMode(FEATURE_IPV6_DELEGATION))
     #endif
     {
+    ZEBRAGEN_LOG("if PD/ONESTACK prefix lifetime source selected");
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
     }
 #endif
 #if !defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if non-PD or ONESTACK prefix source block compiled");
     #if defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if ONESTACK feature check gates non-PD prefix source");
     if (!isFeatureSupportedInCurrentMode(FEATURE_IPV6_DELEGATION))
     #endif
     {
@@ -1098,17 +1115,21 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
         ZEBRAGEN_LOG("else gIpv6AddrAssignment!=ULA assignment=%d", gIpv6AddrAssignment);
     #endif
         #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_SCER11BEL_PRODUCT_REQ_) 
+        ZEBRAGEN_LOG("if HUB4/SCER11BEL prefix source selection branch compiled");
         #if defined(_SCER11BEL_PRODUCT_REQ_) 
             if ( FALSE == IsThisCurrentPartnerID("sky-") )
             {
+                ZEBRAGEN_LOG("if non-sky partner lan_prefix source selected");
                 sysevent_get(sefd, setok, "lan_prefix", prefix, sizeof(prefix));
             }
             else
         #endif /** _SCER11BEL_PRODUCT_REQ_ */
             {
+                ZEBRAGEN_LOG("else sky/HUB4 prefix source selected");
                 sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
             }
         #else
+            ZEBRAGEN_LOG("else default lan_prefix source selected");
             sysevent_get(sefd, setok, "lan_prefix", prefix, sizeof(prefix));
         #endif /* _HUB4_PRODUCT_REQ_ */     
     #ifdef WAN_FAILOVER_SUPPORTED
@@ -1118,17 +1139,21 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
     {
         ZEBRAGEN_LOG("if gModeSwitched=ULA mode=%d", gModeSwitched);
         #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_SCER11BEL_PRODUCT_REQ_)
+        ZEBRAGEN_LOG("if HUB4/SCER11BEL last_broadcasted_prefix source branch compiled");
         #if defined(_SCER11BEL_PRODUCT_REQ_)
             if ( FALSE == IsThisCurrentPartnerID("sky-") )
             {
+                ZEBRAGEN_LOG("if non-sky last_broadcasted_prefix source selected");
                 sysevent_get(sefd, setok, "lan_prefix", last_broadcasted_prefix, sizeof(last_broadcasted_prefix));
             }
             else
         #endif /** _SCER11BEL_PRODUCT_REQ_ */
             {
+                ZEBRAGEN_LOG("else sky/HUB4 last_broadcasted_prefix source selected");
                 sysevent_get(sefd, setok, "ipv6_prefix", last_broadcasted_prefix, sizeof(last_broadcasted_prefix));
             }
         #else
+            ZEBRAGEN_LOG("else default last_broadcasted_prefix source selected");
             sysevent_get(sefd, setok, "lan_prefix", last_broadcasted_prefix, sizeof(last_broadcasted_prefix));
         #endif /* _HUB4_PRODUCT_REQ_ */
     }
@@ -1141,9 +1166,12 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
 #if (!defined (_HUB4_PRODUCT_REQ_) && !defined(_RDKB_GLOBAL_PRODUCT_REQ_)) || defined (_WNXL11BWL_PRODUCT_REQ_)
 
+    ZEBRAGEN_LOG("if current_lan_ipv6address source selected");
     sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
 #else
+    ZEBRAGEN_LOG("else HUB4 or GLOBAL current_lan_ipv6address alternative block compiled");
 #if defined(_RDKB_GLOBAL_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if RDKB_GLOBAL partner-specific LAN ULA gating compiled");
     if( TRUE == gIsLANULAFeatureSupported )
 #endif /** _RDKB_GLOBAL_PRODUCT_REQ_ */
     {
@@ -1189,6 +1217,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 #if defined(_RDKB_GLOBAL_PRODUCT_REQ_)
     else
     {
+        ZEBRAGEN_LOG("else LAN ULA feature unsupported using current_lan_ipv6address");
         sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
     }
 #endif  /** _RDKB_GLOBAL_PRODUCT_REQ_ */
@@ -1202,9 +1231,11 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
     }
 
 #ifdef MULTILAN_FEATURE
+    ZEBRAGEN_LOG("if MULTILAN lifetimes sourced from client sysevents");
     sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, valid_lft, sizeof(valid_lft));
 #else
+    ZEBRAGEN_LOG("else standard lifetimes sourced from ipv6_prefix sysevents");
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
 #endif
@@ -1233,17 +1264,21 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 
 
 #if defined(MULTILAN_FEATURE) || defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined (_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if multilan or PD runtime RA loop compiled");
     int multilan_enabled = 0;
     int pd_enabled = 0;
 
 #if defined(MULTILAN_FEATURE)
+    ZEBRAGEN_LOG("if MULTILAN_FEATURE enabled for RA generation");
     multilan_enabled = 1;
 #endif
 #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
+    ZEBRAGEN_LOG("if DHCPv6 prefix delegation enabled for RA generation");
     pd_enabled = 1;
 #endif
 
     #ifdef _ONESTACK_PRODUCT_REQ_
+        ZEBRAGEN_LOG("if ONESTACK feature gate used for prefix delegation state");
         pd_enabled = isFeatureSupportedInCurrentMode(FEATURE_IPV6_DELEGATION);
     #endif
 
@@ -1293,19 +1328,25 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 #endif
 
 #if defined (MULTILAN_FEATURE)
+        ZEBRAGEN_LOG("if MULTILAN_FEATURE prefix comment prefix=%s orig_lan_prefix=%s lan_addr=%s", prefix, orig_lan_prefix, lan_addr);
         fprintf(fp, "# Based on prefix=%s, old_previous=%s, LAN IPv6 address=%s\n", 
            prefix, orig_lan_prefix, lan_addr);
 #else
+        ZEBRAGEN_LOG("else non-MULTILAN_FEATURE prefix comment prefix=%s orig_prefix=%s lan_addr=%s", prefix, orig_prefix, lan_addr);
         fprintf(fp, "# Based on prefix=%s, old_previous=%s, LAN IPv6 address=%s\n", 
            prefix, orig_prefix, lan_addr);
 #endif
 
 #if defined(_COSA_FOR_BCI_)
+    ZEBRAGEN_LOG("if COSA_FOR_BCI prefix gating uses bEnabled");
     if ((strlen(prefix) || strlen(orig_prefix)) && bEnabled)
 #else
+    ZEBRAGEN_LOG("else standard runtime prefix gating selected");
 #if (!defined (_HUB4_PRODUCT_REQ_) && !defined(_RDKB_GLOBAL_PRODUCT_REQ_)) || defined (_WNXL11BWL_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("else default prefix gating uses prefix and orig_prefix");
     if (strlen(prefix) || strlen(orig_prefix))
 #else
+    ZEBRAGEN_LOG("else HUB4/GLOBAL prefix gating includes lan_addr_prefix");
     if (strlen(prefix) || strlen(orig_prefix) || strlen(lan_addr_prefix))
 #endif
 #endif
@@ -1315,7 +1356,9 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
             ZEBRAGEN_LOG("if entering RA interface block lan_if=%s prefix=%s orig_prefix=%s lan_addr=%s", lan_if, prefix, orig_prefix, lan_addr);
 
 #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_SCER11BEL_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if HUB4/SCER11BEL RA prefix handling branch");
 #if defined(_SCER11BEL_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if SCER11BEL partner check compiled for RA prefix handling");
         if ( TRUE == IsThisCurrentPartnerID("sky-") )
 #endif /** _SCER11BEL_PRODUCT_REQ_ */
         {
@@ -1364,6 +1407,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
             fprintf(fp, "   ipv6 nd prefix %s 0 0\n", lan_addr_prefix);
         }   
 #else
+    ZEBRAGEN_LOG("else non-HUB4 RA prefix handling branch");
 #if defined(_RDKB_GLOBAL_PRODUCT_REQ_)
         if ( TRUE == IsThisCurrentPartnerID("sky-") )
         {
@@ -1404,9 +1448,12 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
             {
                 ZEBRAGEN_LOG("if standard prefix branch prefix=%s wan_st=%s", prefix, wan_st);
 #ifdef WAN_FAILOVER_SUPPORTED
+                ZEBRAGEN_LOG("if WAN_FAILOVER_SUPPORTED prefix write path compiled");
 #ifdef FEATURE_RDKB_CONFIGURABLE_WAN_INTERFACE
+                ZEBRAGEN_LOG("if configurable WAN comparison uses mesh_wan_ifname");
                 if(strcmp(wan_interface, mesh_wan_ifname ) == 0)
 #else
+                ZEBRAGEN_LOG("else WAN comparison uses default_wan_interface");
                 if (strcmp(default_wan_interface, wan_interface) != 0)
 #endif
                 {
@@ -1482,9 +1529,12 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
                 fprintf(fp, "   ipv6 nd ra-interval 30\n"); //Set ra-interval to default 30 secs as per Erouter Specs.
             }
 #else
+    ZEBRAGEN_LOG("else non-INTEL_PUMA7 ra-interval compile path");
 #if (!defined (_HUB4_PRODUCT_REQ_) && !defined(_SCER11BEL_PRODUCT_REQ_) ) || defined (_WNXL11BWL_PRODUCT_REQ_) 
+        ZEBRAGEN_LOG("if default ra-interval 3 branch");
         fprintf(fp, "   ipv6 nd ra-interval 3\n");
 #else
+    ZEBRAGEN_LOG("else SCER11BEL/HUB4 ra-interval compile path");
 #if defined(_SCER11BEL_PRODUCT_REQ_)
         if ( FALSE == IsThisCurrentPartnerID("sky-") )
         {
@@ -1501,6 +1551,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 #endif
 
 #if !defined (_HUB4_PRODUCT_REQ_) || defined (_WNXL11BWL_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if standard ra-lifetime compile path");
 #if defined(_SCER11BEL_PRODUCT_REQ_)
         if ( TRUE == IsThisCurrentPartnerID("sky-") )
         {
@@ -1514,9 +1565,12 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 #endif /** _SCER11BEL_PRODUCT_REQ_ */
         {
 #ifdef WAN_FAILOVER_SUPPORTED
+                ZEBRAGEN_LOG("if WAN_FAILOVER_SUPPORTED ra-lifetime path compiled");
 #ifdef FEATURE_RDKB_CONFIGURABLE_WAN_INTERFACE
+                ZEBRAGEN_LOG("if configurable WAN comparison used for ra-lifetime");
                 if(strcmp(wan_interface, mesh_wan_ifname ) == 0)
 #else
+            ZEBRAGEN_LOG("else default WAN comparison used for ra-lifetime");
             if (strcmp(default_wan_interface, wan_interface) != 0)
 #endif
             {
@@ -1545,6 +1599,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 	/* SKYH4-5324 : Selfheal is not working from IPv6 only client.
 	 * The Router Life time should not change even after wan disconnection for SKYHUB4.
 	 * Requirement of SelfHeal feature */
+        ZEBRAGEN_LOG("else HUB4 fixed ra-lifetime 540");
         fprintf(fp, "   ipv6 nd ra-lifetime 540\n");
 #endif //_HUB4_PRODUCT_REQ_
 
@@ -1555,12 +1610,20 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
             fprintf(fp, "   ipv6 nd managed-config-flag\n");
         }
 #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_SCER11BEL_PRODUCT_REQ_)
+        ZEBRAGEN_LOG("if managed-config clear compile branch enabled");
 #if defined(_SCER11BEL_PRODUCT_REQ_)
+            ZEBRAGEN_LOG("if managed-config clear SCER11BEL partner gate enabled");
             else if ((strcmp(m_flag, "0") == 0) && ( TRUE == IsThisCurrentPartnerID("sky-") ))
 #else
+            ZEBRAGEN_LOG("else managed-config clear HUB4 gate enabled");
             else if (strcmp(m_flag, "0") == 0)
 #endif /** _SCER11BEL_PRODUCT_REQ_ */
             {
+#if defined(_SCER11BEL_PRODUCT_REQ_)
+                ZEBRAGEN_LOG("if managed-config clear branch compiled for SCER11BEL/HUB4");
+#else
+                ZEBRAGEN_LOG("else managed-config clear branch compiled for HUB4");
+#endif
                 ZEBRAGEN_LOG("else-if router_managed_flag cleared m_flag=%s", m_flag);
                 fprintf(fp, "   no ipv6 nd managed-config-flag\n");
             }
@@ -1573,12 +1636,20 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
             fprintf(fp, "   ipv6 nd other-config-flag\n");
         }
 #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_SCER11BEL_PRODUCT_REQ_) 
+        ZEBRAGEN_LOG("if other-config clear compile branch enabled");
 #if defined(_SCER11BEL_PRODUCT_REQ_)
+            ZEBRAGEN_LOG("if other-config clear SCER11BEL partner gate enabled");
             else if ((strcmp(o_flag, "0") == 0) && ( TRUE == IsThisCurrentPartnerID("sky-") ))
 #else
+            ZEBRAGEN_LOG("else other-config clear HUB4 gate enabled");
             else if (strcmp(o_flag, "0") == 0)
 #endif /** _SCER11BEL_PRODUCT_REQ_ */
             {
+#if defined(_SCER11BEL_PRODUCT_REQ_)
+                ZEBRAGEN_LOG("if other-config clear branch compiled for SCER11BEL/HUB4");
+#else
+                ZEBRAGEN_LOG("else other-config clear branch compiled for HUB4");
+#endif
                 ZEBRAGEN_LOG("else-if router_other_flag cleared o_flag=%s", o_flag);
                 fprintf(fp, "   no ipv6 nd other-config-flag\n");
             }
@@ -1619,13 +1690,17 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
         {
             ZEBRAGEN_LOG("if captive portal redirect detected redirection_flag=%s iresCode=%d", buf, iresCode);
 #if defined (_COSA_BCM_MIPS_) 
+        ZEBRAGEN_LOG("if COSA_BCM_MIPS captive portal compile path selected");
 #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
+        ZEBRAGEN_LOG("if BCM_MIPS PD captive portal branch retains inWifiCp unchanged");
 	    // For CBR platform, the captive portal redirection feature was removed
 	    // inWifiCp = 1;
 #else
+	    ZEBRAGEN_LOG("else BCM_MIPS non-PD captive portal set inWifiCp");
 	    inWifiCp = 1;
 #endif
 #else
+	    ZEBRAGEN_LOG("else non-BCM_MIPS captive portal set inWifiCp");
 	    inWifiCp = 1;
 #endif
 	}
@@ -1702,16 +1777,20 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
             }
         }
 #else
+            ZEBRAGEN_LOG("else non-RDKB_GLOBAL rdnss block lan_addr=%s ula_enable=%d", lan_addr, ula_enable);
 #if !defined (_HUB4_PRODUCT_REQ_) || defined (_WNXL11BWL_PRODUCT_REQ_)
+		ZEBRAGEN_LOG("if non-RDKB_GLOBAL rdnss condition uses lan_addr only");
 		if (strlen(lan_addr))
 #else
+        ZEBRAGEN_LOG("else non-RDKB_GLOBAL rdnss condition requires ula_enable");
                 if (strlen(lan_addr) && ula_enable)
 #endif 
         {
 		    ZEBRAGEN_LOG("if lan_addr used for rdnss lan_addr=%s", lan_addr);
                     fprintf(fp, "   ipv6 nd rdnss %s %d\n", lan_addr, rdnsslft);
         }
-#endif /** _RDKB_GLOBAL_PRODUCT_REQ_ */
+
+        	#endif /** _RDKB_GLOBAL_PRODUCT_REQ_ */
 	}
 
 #if defined (SPEED_BOOST_SUPPORTED)
@@ -1763,19 +1842,25 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 #endif
         /* static IPv6 DNS */
 #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if PD or ONESTACK option count compile path selected");
     #if defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if ONESTACK feature check gates option count source");
     if (isFeatureSupportedInCurrentMode(FEATURE_IPV6_DELEGATION))
     #endif
     {
+            ZEBRAGEN_LOG("if PD/ONESTACK option count source selected for interface index=%d", i);
             snprintf(rec, sizeof(rec), "dhcpv6spool%d0::optionnumber", i);
             syscfg_get(NULL, rec, val, sizeof(val));
     }
 #endif
 #if !defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if non-PD or ONESTACK default option count compile path selected");
     #if defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if ONESTACK feature check gates default option count source");
     if (!isFeatureSupportedInCurrentMode(FEATURE_IPV6_DELEGATION))
     #endif
     {
+        ZEBRAGEN_LOG("else default option count source selected");
         syscfg_get(NULL, "dhcpv6spool00::optionnumber", val, sizeof(val));
     }
 #endif
@@ -1783,10 +1868,13 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
         for (j = 0; j < nopt; j++) {
             ZEBRAGEN_LOG("for dhcpv6 option j=%d nopt=%d", j, nopt);
 #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(_ONESTACK_PRODUCT_REQ_)
+            ZEBRAGEN_LOG("if PD or ONESTACK option-iteration reset path selected");
     #if defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if ONESTACK feature check gates name_servs reset");
     if (isFeatureSupportedInCurrentMode(FEATURE_IPV6_DELEGATION))
     #endif
     {
+             ZEBRAGEN_LOG("if PD/ONESTACK clears name_servs per option iteration");
              memset(name_servs, 0, sizeof(name_servs));
     }
 #endif
@@ -1838,10 +1926,13 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
                 ZEBRAGEN_LOG("if static DNS enabled name_servs=%s", name_servs);
 				memset( name_servs, 0, sizeof( name_servs ) );
 #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_RDKB_GLOBAL_PRODUCT_REQ_)
+                ZEBRAGEN_LOG("if HUB4/GLOBAL static DNS fetch compile gate selected");
 #if defined(_RDKB_GLOBAL_PRODUCT_REQ_)
+                ZEBRAGEN_LOG("if static DNS fetch gated by LAN ULA feature support and ula_enable");
                 /* RDKB-50535 send ULA address as DNS address only when lan UNA is enabled */
 				if (( TRUE == gIsLANULAFeatureSupported ) && (ula_enable))
 #else
+                ZEBRAGEN_LOG("else static DNS fetch gated by ula_enable");
 				/* RDKB-50535 send ULA address as DNS address only when lan UNA is enabled */
 				if (ula_enable)
 #endif /** _RDKB_GLOBAL_PRODUCT_REQ_ */
@@ -1854,8 +1945,10 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 																			   StaticDNSServersEnabled,
 																			   name_servs );
 #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_RDKB_GLOBAL_PRODUCT_REQ_)
+                ZEBRAGEN_LOG("if SecureWebUI static DNS override compile branch checks ula_enable");
                                 if (!strncmp(l_cSecWebUI_Enabled, "true", 4) && !ula_enable)
 #else
+				ZEBRAGEN_LOG("else SecureWebUI static DNS override compile branch ignores ula_enable");
 				if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
 #endif
                                 {
@@ -1879,6 +1972,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 				if (strlen(name_servs) == 0) {
 				    ZEBRAGEN_LOG("if name_servs empty fetch from WAN gIpv6AddrAssignment=%d", gIpv6AddrAssignment);
                     #ifdef WAN_FAILOVER_SUPPORTED
+                    ZEBRAGEN_LOG("if WAN_FAILOVER_SUPPORTED name server fallback path selected");
                     if ( gIpv6AddrAssignment == ULA_IPV6 )
                     {
 					    ZEBRAGEN_LOG("if backup WAN IPv6 nameserver requested");
@@ -1898,6 +1992,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
                             sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs), 
                             sizeof(name_servs) - strlen(name_servs));
                     #ifdef WAN_FAILOVER_SUPPORTED
+                ZEBRAGEN_LOG("if WAN_FAILOVER_SUPPORTED closing branch for DNS source selection compiled");
                     }
                     #endif
 				}
@@ -1908,6 +2003,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 				ZEBRAGEN_LOG("for rdnss token tok=%s lan_addr=%s", tok, lan_addr);
 			// Modifying rdnss value to fix the zebra config.
 #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_SCER11BEL_PRODUCT_REQ_)
+                        ZEBRAGEN_LOG("if HUB4/SCER11BEL rdnss token filtering compile path selected");
 #if defined(_SCER11BEL_PRODUCT_REQ_) 
                         if( TRUE == IsThisCurrentPartnerID("sky-") ) 
                         {
@@ -1931,6 +2027,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
                         }
 #endif /** _SCER11BEL_PRODUCT_REQ_ */
 #else
+                        ZEBRAGEN_LOG("else default rdnss write tok=%s rdnsslft=%d", tok, rdnsslft);
                         fprintf(fp, "   ipv6 nd rdnss %s %d\n", tok, rdnsslft);
 #endif
                 }
@@ -1959,19 +2056,24 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 	}
     
 
+    ZEBRAGEN_LOG("if irdp multicast lan_if=%s", lan_if);
     fprintf(fp, "interface %s\n", lan_if);
     fprintf(fp, "   ip irdp multicast\n");
 
 #if defined(MULTILAN_FEATURE) || defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(_ONESTACK_PRODUCT_REQ_)
+    ZEBRAGEN_LOG("if multilan/PD RA loop closing block compiled");
     } //for (i = 0; i < enabled_iface_num; i++)
     }
 #endif
 
 #if !defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(_ONESTACK_PRODUCT_REQ_)
+ZEBRAGEN_LOG("if subprefix compile path selected");
 #ifdef _ONESTACK_PRODUCT_REQ_
+ZEBRAGEN_LOG("if ONESTACK feature check gates subprefix compile path");
 if (!isFeatureSupportedInCurrentMode(FEATURE_IPV6_DELEGATION))
 #endif
 {
+ZEBRAGEN_LOG("if subprefix RA generation branch entered");
 char cmd[100];
 char out[100];
 char interface_name[32] = {0};
@@ -2035,11 +2137,13 @@ if(!strncmp(out,"true",strlen(out)))
                         strncpy(interface_name,token,sizeof(interface_name)-1);
                 }
                 #else
+                    ZEBRAGEN_LOG("else non-XB3 interface_name uses token directly token=%s", token);
                         strncpy(interface_name,token,sizeof(interface_name)-1);
                 #endif
 
         #if defined (AMENITIES_NETWORK_ENABLED)
         char cAmenityReceived [8] = {0};
+        ZEBRAGEN_LOG("if AMENITIES_NETWORK_ENABLED amenity gating is compiled in");
         syscfg_get( NULL, "Is_Amenity_Received", cAmenityReceived, sizeof(cAmenityReceived));
         if((strncmp(cAmenityReceived, "true",4)) || (strncmp(interface_name, "brlan15", 7) != 0))
         #endif /*AMENITIES_NETWORK_ENABLED*/
@@ -2049,6 +2153,7 @@ if(!strncmp(out,"true",strlen(out)))
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
 
         #ifdef WAN_FAILOVER_SUPPORTED
+        ZEBRAGEN_LOG("if WAN_FAILOVER_SUPPORTED subprefix address source path selected");
         if (gIpv6AddrAssignment == ULA_IPV6)
         {
             ZEBRAGEN_LOG("if subprefix uses ULA address interface_name=%s", interface_name);
@@ -2061,6 +2166,7 @@ if(!strncmp(out,"true",strlen(out)))
             rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6");
  
         #ifdef WAN_FAILOVER_SUPPORTED
+        ZEBRAGEN_LOG("if WAN_FAILOVER_SUPPORTED closes subprefix address source branch");
         }
         #endif
 		if(rc < EOK)
@@ -2073,6 +2179,7 @@ if(!strncmp(out,"true",strlen(out)))
 		sysevent_get(sefd, setok, cmd, prefix, sizeof(prefix));
 
         #ifdef WAN_FAILOVER_SUPPORTED
+        ZEBRAGEN_LOG("if WAN_FAILOVER_SUPPORTED subprefix last_broadcasted_prefix path selected");
 
         memset(last_broadcasted_prefix,0,sizeof(last_broadcasted_prefix));
         memset(cmd,0,sizeof(cmd));
@@ -2216,6 +2323,7 @@ if(!strncmp(out,"true",strlen(out)))
 
 	fprintf(fp, "interface %s\n", interface_name);
         }
+    ZEBRAGEN_LOG("if subprefix irdp multicast interface_name=%s", interface_name);
 	fprintf(fp, "   ip irdp multicast\n");
 	}
 	memset(out,0,sizeof(out));
