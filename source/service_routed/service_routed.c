@@ -1777,7 +1777,7 @@ ZEBRAGEN_LOG("if disabled extender early-return code path retained");
             }
         }
 #else
-            ZEBRAGEN_LOG("else non-RDKB_GLOBAL rdnss block lan_addr=%s ula_enable=%d", lan_addr, ula_enable);
+            ZEBRAGEN_LOG("else non-RDKB_GLOBAL rdnss block lan_addr=%s", lan_addr);
 #if !defined (_HUB4_PRODUCT_REQ_) || defined (_WNXL11BWL_PRODUCT_REQ_)
 		ZEBRAGEN_LOG("if non-RDKB_GLOBAL rdnss condition uses lan_addr only");
 		if (strlen(lan_addr))
