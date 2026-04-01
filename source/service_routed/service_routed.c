@@ -1402,7 +1402,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
             //Do not write a config line for the prefix if it's blank
             if (strlen(prefix))
             {
-                ZEBRAGEN_LOG("if standard prefix branch prefix=%s wan_st=%s default_wan=%s wan_if=%s", prefix, wan_st, default_wan_interface, wan_interface);
+                ZEBRAGEN_LOG("if standard prefix branch prefix=%s wan_st=%s", prefix, wan_st);
 #ifdef WAN_FAILOVER_SUPPORTED
 #ifdef FEATURE_RDKB_CONFIGURABLE_WAN_INTERFACE
                 if(strcmp(wan_interface, mesh_wan_ifname ) == 0)
@@ -1708,7 +1708,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
                 if (strlen(lan_addr) && ula_enable)
 #endif 
         {
-		    ZEBRAGEN_LOG("if lan_addr used for rdnss lan_addr=%s ula_enable=%d", lan_addr, ula_enable);
+		    ZEBRAGEN_LOG("if lan_addr used for rdnss lan_addr=%s", lan_addr);
                     fprintf(fp, "   ipv6 nd rdnss %s %d\n", lan_addr, rdnsslft);
         }
 #endif /** _RDKB_GLOBAL_PRODUCT_REQ_ */
@@ -1846,7 +1846,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 				if (ula_enable)
 #endif /** _RDKB_GLOBAL_PRODUCT_REQ_ */
 #endif
-                    ZEBRAGEN_LOG("if static DNS syscfg fetch allowed ula_enable=%d", ula_enable);
+                    ZEBRAGEN_LOG("if static DNS syscfg fetch allowed");
 					syscfg_get(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServers", name_servs, sizeof(name_servs));
 
 				fprintf(stderr,"%s %d - DNSServersEnabled:%d DNSServers:%s\n", __FUNCTION__, 
@@ -1859,7 +1859,7 @@ STATIC int gen_zebra_conf(int sefd, token_t setok)
 				if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
 #endif
                                 {
-				    ZEBRAGEN_LOG("if SecureWebUI static DNS override enabled SecureWebUI=%s ula_enable=%d", l_cSecWebUI_Enabled, ula_enable);
+				    ZEBRAGEN_LOG("if SecureWebUI static DNS override enabled SecureWebUI=%s", l_cSecWebUI_Enabled);
                                     char static_dns[256] = {0};
                                     sysevent_get(sefd, setok, "lan_ipaddr_v6", static_dns, sizeof(static_dns));
                                     fprintf(fp, "   ipv6 nd rdnss %s %d\n", static_dns, rdnsslft);
