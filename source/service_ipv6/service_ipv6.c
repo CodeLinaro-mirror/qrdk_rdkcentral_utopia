@@ -2094,6 +2094,28 @@ STATIC int dhcpv6s_start(struct serv_ipv6 *si6)
     return 0;
 }
 
+#if defined(_CBR2_PRODUCT_REQ_)
+STATIC bool is_full_bridge_static_mode(void)
+{
+    char bridge_mode[4] = {0};
+
+    syscfg_get(NULL, "bridge_mode", bridge_mode, sizeof(bridge_mode));
+    return !strcmp(bridge_mode, "3");
+}
+
+STATIC int dhcpv6s_start_if_needed(struct serv_ipv6 *si6)
+{
+    if (is_full_bridge_static_mode()) {
+        fprintf(stderr, "%s: Full bridge static mode. Dibbler start not required!\n", __FUNCTION__);
+        return 0;
+    }
+
+    return dhcpv6s_start(si6);
+}
+#else
+#define dhcpv6s_start_if_needed dhcpv6s_start
+#endif
+
 STATIC int dhcpv6s_stop(struct serv_ipv6 *si6)
 {
 #ifdef MULTILAN_FEATURE
@@ -2108,7 +2130,8 @@ STATIC int dhcpv6s_restart(struct serv_ipv6 *si6)
     if (dhcpv6s_stop(si6) != 0)
         fprintf(stderr, "%s: dhcpv6s_stop error\n", __FUNCTION__);
 
-    return dhcpv6s_start(si6);
+    //return dhcpv6s_start(si6);
+    return dhcpv6s_start_if_needed(si6);
 }
 
 
@@ -2199,7 +2222,8 @@ STATIC int serv_ipv6_start(struct serv_ipv6 *si6)
     /*start zebra*/
     sysevent_set(si6->sefd, si6->setok, "zebra-restart", NULL, 0);
 	
-    if (dhcpv6s_start(si6) != 0) {
+   // if (dhcpv6s_start(si6) != 0) {
+   if (dhcpv6s_start_if_needed(si6) != 0) {
         fprintf(stderr, "start dhcpv6 server error.\n");
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
         return -1;
@@ -2387,7 +2411,7 @@ static struct cmd_op cmd_ops[] = {
     {"restart",     serv_ipv6_restart,"restart service ipv6"},
     {"addr-set",     lan_addr6_set, "set IPv6 address for lan interface"},
     {"addr-unset",     lan_addr6_unset, "unset IPv6 address for lan interface"},
-    {"dhcpv6s-start",  dhcpv6s_start,     "start DHCPv6 Sever"},
+    {"dhcpv6s-start",  dhcpv6s_start_if_needed, "start DHCPv6 Sever"},
     {"dhcpv6s-stop",   dhcpv6s_stop,      "stop DHCPv6 Server"},
     {"dhcpv6s-restart",dhcpv6s_restart,   "restart DHCPv6 Server"},
 };

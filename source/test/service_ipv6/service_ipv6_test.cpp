@@ -965,6 +965,24 @@ TEST_F(Service_ipv6TestFixture, PositiveCaseDhcpv6sStop) {
         EXPECT_EQ(0, dhcpv6s_stop(&si6));
 }
 
+#if defined(_CBR2_PRODUCT_REQ_)
+TEST_F(Service_ipv6TestFixture, FullBridgeStaticSkipsDhcpv6sStartCall) {
+    struct serv_ipv6 si6 = {};
+    char bridge_mode[4] = "3";
+
+    EXPECT_CALL(*g_syscfgMock, syscfg_get(_, StrEq("bridge_mode"), _, _))
+        .Times(1)
+        .WillOnce(::testing::DoAll(
+            SetArgNPointeeTo<2>(std::begin(bridge_mode), sizeof(bridge_mode)),
+            ::testing::Return(0)
+        ));
+    EXPECT_CALL(*g_securewrapperMock, v_secure_system(HasSubstr("start"), _))
+        .Times(0);
+
+    EXPECT_EQ(0, dhcpv6s_start_if_needed(&si6));
+}
+#endif
+
 TEST_F(Service_ipv6TestFixture, NegativeCaseDhcpv6sRestart) {
         serv_ipv6 si6;
         char evt_val[64]="error";
