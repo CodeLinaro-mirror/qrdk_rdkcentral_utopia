@@ -938,6 +938,72 @@ static int get_PartnerID (char *PartnerID)
     if ( NULL == FilePtr )
     {
         APPLY_PRINT("%s - %s is not there\n", __FUNCTION__, PARTNERID_FILE );
+#ifdef _ONESTACK_PRODUCT_REQ_
+        /*
+         * XB10-3153: Preserve the provisioned syscfg PartnerId across the non-onestack ->
+         * onestack migration (empty devicemode).
+         *
+         * The initial migration only needs the Factory/OTP PartnerId to derive the correct
+         * devicemode (e.g. OTP "ComcastBusiness" -> business, while the syscfg PartnerId
+         * legitimately stays "comcast"). It must NOT overwrite the syndication syscfg PartnerId
+         * itself, which can differ from the factory value on warehouse devices that were moved
+         * between Rogers (east) and Shaw (west): OTP = "shaw" but provisioned PartnerId = "rogers".
+         *
+         * Skip this preservation on a factory reset (seed from factory) or when syscfg has no
+         * valid PartnerId. Companion change XB10-3106 persists /nvram/.partner_id and drops the
+         * stale-file factory comparison, covering the file-present path for newly provisioned units.
+         */
+        {
+            char syscfgPartner[PARTNER_ID_LEN]  = {0};
+            char factoryPartner[PARTNER_ID_LEN] = {0};
+            bool isFactoryReset = ( access( PARTNER_DEFAULT_APPLY_FILE, F_OK ) == 0 );
+
+            if ( !isFactoryReset &&
+                 (0 == syscfg_get(NULL, "PartnerID", syscfgPartner, sizeof(syscfgPartner))) &&
+                 (syscfgPartner[0] != '\0') &&
+                 (0 != strcasecmp(syscfgPartner, "unknown")) )
+            {
+                /*
+                 * devicemode is derived from the Factory/OTP partner, never from syscfg.
+                 * Use onestackutils_set_syscfg_devicemode() directly instead of
+                 * onestackutils_override_partnerid_and_set_devicemode(), because the latter
+                 * rewrites the PartnerID in-place (any "*Business" -> "comcast"); here we must
+                 * leave the provisioned syscfg PartnerId untouched. The "business" detection
+                 * mirrors that library helper so every *Business variant (comcastBusiness,
+                 * rogersBusiness, shawBusiness, ...) resolves to business mode.
+                 */
+                if ( (0 == getFactoryPartnerId(factoryPartner)) && (factoryPartner[0] != '\0') &&
+                     ( (NULL != strstr(factoryPartner, "business")) ||
+                       (NULL != strstr(factoryPartner, "Business")) ) )
+                {
+                    onestackutils_set_syscfg_devicemode("business");
+                }
+                else
+                {
+                    onestackutils_set_syscfg_devicemode("residential");
+                }
+
+                APPLY_PRINT("%s - XB10-3153: onestack migration, preserving provisioned syscfg "
+                            "PartnerId '%s' (factory partner '%s')\n",
+                            __FUNCTION__, syscfgPartner, factoryPartner );
+                t2_event_s("partnerid_preserved_onupgrade", syscfgPartner);
+
+                /* Preserve the provisioned PartnerId - utopia is authoritative. */
+                strncpy(PartnerID, syscfgPartner, PARTNER_ID_LEN - 1);
+                PartnerID[PARTNER_ID_LEN - 1] = '\0';
+                validatePartnerId(PartnerID);
+                set_syscfg_partner_values(PartnerID, "PartnerID");
+
+                memset(buf, 0, sizeof(buf));
+                if (0 == getFactoryPartnerId(buf)) { t2_event_s("getfactorypartner_split", buf); }
+                else                               { t2_event_s("getfactorypartner_split", NULL); }
+                APPLY_PRINT("[GET-PARTNERID] Current_PartnerID:%s\n", PartnerID);
+                t2_event_s("getcurrentpartner_split", PartnerID);
+                return 0;
+            }
+        }
+#endif // _ONESTACK_PRODUCT_REQ_
+
         if( ( 0 == getFactoryPartnerId( PartnerID ) ) && ( PartnerID [ 0 ] != '\0' ) )
         {
             APPLY_PRINT("%s - PartnerID from HAL: %s\n",__FUNCTION__,PartnerID );
