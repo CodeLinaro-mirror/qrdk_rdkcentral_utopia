@@ -944,6 +944,46 @@ static int get_PartnerID (char *PartnerID)
     if ( NULL == FilePtr )
     {
         APPLY_PRINT("%s - %s is not there\n", __FUNCTION__, PARTNERID_FILE );
+#ifdef _ONESTACK_PRODUCT_REQ_
+        {
+            char syscfgPartner[PARTNER_ID_LEN]  = {0};
+            char factoryPartner[PARTNER_ID_LEN] = {0};
+            bool isFactoryReset = ( access( PARTNER_DEFAULT_APPLY_FILE, F_OK ) == 0 );
+
+            if ( !isFactoryReset &&
+                 (0 == syscfg_get(NULL, "PartnerID", syscfgPartner, sizeof(syscfgPartner))) &&
+                 (syscfgPartner[0] != '\0') &&
+                 (0 != strcasecmp(syscfgPartner, "unknown")) )
+            {
+                if ( (0 == getFactoryPartnerId(factoryPartner)) && (factoryPartner[0] != '\0') &&
+                     ( (NULL != strstr(factoryPartner, "business")) ||
+                       (NULL != strstr(factoryPartner, "Business")) ) )
+                {
+                    onestackutils_set_syscfg_devicemode("business");
+                }
+                else
+                {
+                    onestackutils_set_syscfg_devicemode("residential");
+                }
+
+                APPLY_PRINT("%s - XB10-3153: preserving provisioned syscfg PartnerId '%s' (factory partner '%s')\n",
+                            __FUNCTION__, syscfgPartner, factoryPartner );
+                t2_event_s("partnerid_preserved_onupgrade", syscfgPartner);
+
+                strncpy(PartnerID, syscfgPartner, PARTNER_ID_LEN - 1);
+                PartnerID[PARTNER_ID_LEN - 1] = '\0';
+                validatePartnerId(PartnerID);
+                set_syscfg_partner_values(PartnerID, "PartnerID");
+
+                memset(buf, 0, sizeof(buf));
+                if (0 == getFactoryPartnerId(buf)) { t2_event_s("getfactorypartner_split", buf); }
+                else                               { t2_event_s("getfactorypartner_split", NULL); }
+                APPLY_PRINT("[GET-PARTNERID] Current_PartnerID:%s\n", PartnerID);
+                t2_event_s("getcurrentpartner_split", PartnerID);
+                return 0;
+            }
+        }
+#endif
         if( ( 0 == getFactoryPartnerId( PartnerID ) ) && ( PartnerID [ 0 ] != '\0' ) )
         {
             APPLY_PRINT("%s - PartnerID from HAL: %s\n",__FUNCTION__,PartnerID );
