@@ -939,20 +939,6 @@ static int get_PartnerID (char *PartnerID)
     {
         APPLY_PRINT("%s - %s is not there\n", __FUNCTION__, PARTNERID_FILE );
 #ifdef _ONESTACK_PRODUCT_REQ_
-        /*
-         * XB10-3153: Preserve the provisioned syscfg PartnerId across the non-onestack ->
-         * onestack migration (empty devicemode).
-         *
-         * The initial migration only needs the Factory/OTP PartnerId to derive the correct
-         * devicemode (e.g. OTP "ComcastBusiness" -> business, while the syscfg PartnerId
-         * legitimately stays "comcast"). It must NOT overwrite the syndication syscfg PartnerId
-         * itself, which can differ from the factory value on warehouse devices that were moved
-         * between Rogers (east) and Shaw (west): OTP = "shaw" but provisioned PartnerId = "rogers".
-         *
-         * Skip this preservation on a factory reset (seed from factory) or when syscfg has no
-         * valid PartnerId. Companion change XB10-3106 persists /nvram/.partner_id and drops the
-         * stale-file factory comparison, covering the file-present path for newly provisioned units.
-         */
         {
             char syscfgPartner[PARTNER_ID_LEN]  = {0};
             char factoryPartner[PARTNER_ID_LEN] = {0};
@@ -963,15 +949,6 @@ static int get_PartnerID (char *PartnerID)
                  (syscfgPartner[0] != '\0') &&
                  (0 != strcasecmp(syscfgPartner, "unknown")) )
             {
-                /*
-                 * devicemode is derived from the Factory/OTP partner, never from syscfg.
-                 * Use onestackutils_set_syscfg_devicemode() directly instead of
-                 * onestackutils_override_partnerid_and_set_devicemode(), because the latter
-                 * rewrites the PartnerID in-place (any "*Business" -> "comcast"); here we must
-                 * leave the provisioned syscfg PartnerId untouched. The "business" detection
-                 * mirrors that library helper so every *Business variant (comcastBusiness,
-                 * rogersBusiness, shawBusiness, ...) resolves to business mode.
-                 */
                 if ( (0 == getFactoryPartnerId(factoryPartner)) && (factoryPartner[0] != '\0') &&
                      ( (NULL != strstr(factoryPartner, "business")) ||
                        (NULL != strstr(factoryPartner, "Business")) ) )
@@ -988,7 +965,6 @@ static int get_PartnerID (char *PartnerID)
                             __FUNCTION__, syscfgPartner, factoryPartner );
                 t2_event_s("partnerid_preserved_onupgrade", syscfgPartner);
 
-                /* Preserve the provisioned PartnerId - utopia is authoritative. */
                 strncpy(PartnerID, syscfgPartner, PARTNER_ID_LEN - 1);
                 PartnerID[PARTNER_ID_LEN - 1] = '\0';
                 validatePartnerId(PartnerID);
