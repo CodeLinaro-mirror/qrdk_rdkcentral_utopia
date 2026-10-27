@@ -2090,6 +2090,26 @@ STATIC void checkIfModeIsSwitched(int sefd, token_t setok)
 
 #endif 
 
+/* Returns malloc'd file contents, or NULL if the file is missing. */
+STATIC char *read_file_alloc(const char *path)
+{
+    FILE *fp = fopen(path, "rb");
+    long len;
+    char *buf = NULL;
+
+    if (!fp)
+        return NULL;
+    if (fseek(fp, 0, SEEK_END) == 0 && (len = ftell(fp)) >= 0 && fseek(fp, 0, SEEK_SET) == 0) {
+        buf = calloc(1, len + 1);
+        if (buf && fread(buf, 1, len, fp) != (size_t)len) {
+            free(buf);
+            buf = NULL;
+        }
+    }
+    fclose(fp);
+    return buf;
+}
+
 static int gZebraRestartRequested = 0;
 
 STATIC int radv_start(struct serv_routed *sr)
@@ -2168,10 +2188,22 @@ STATIC int radv_start(struct serv_routed *sr)
 
 #endif 
 
+char *conf = read_file_alloc(ZEBRA_CONF_FILE);
+if (conf) {
+    ROUTED_LOG("%s: zebra.conf:\n%s\n", __FUNCTION__, conf);
+    free(conf);
+}
+
     if (gen_zebra_conf(sr->sefd, sr->setok) != 0) {
         fprintf(logfptr, "%s: fail to save zebra config\n", __FUNCTION__);
         return -1;
     }
+
+    conf = read_file_alloc(ZEBRA_CONF_FILE);
+            if (conf) {
+                ROUTED_LOG("\n ********** Generated zebra conf ********* \n %s: zebra.conf:\n%s\n", __FUNCTION__, conf);
+                free(conf);
+            }
 
 #if defined (_HUB4_PRODUCT_REQ_) && (!defined (_WNXL11BWL_PRODUCT_REQ_)) || defined(_SCER11BEL_PRODUCT_REQ_) || defined(_XER2_PRODUCT_REQ_)
 #if defined(_SCER11BEL_PRODUCT_REQ_)  || defined(_XER2_PRODUCT_REQ_)
@@ -2196,6 +2228,11 @@ STATIC int radv_start(struct serv_routed *sr)
     {
         ROUTED_LOG("%s: zebra conf reload \n", __FUNCTION__);
         kill(pid, SIGUSR1);
+        conf = read_file_alloc(ZEBRA_CONF_FILE);
+            if (conf) {
+                ROUTED_LOG("%s: After SIGUSR1, zebra.conf:\n%s\n", __FUNCTION__, conf);
+                free(conf);
+            }
         return 0;
     }
     daemon_stop(ZEBRA_PID_FILE, "zebra");
@@ -2235,6 +2272,7 @@ STATIC int radv_restart(struct serv_routed *sr)
 
 STATIC int radv_zebra_restart(struct serv_routed *sr)
 {
+    ROUTED_LOG("%s : Entering \n", __FUNCTION__);
     gZebraRestartRequested = 1;
     return radv_restart(sr);
 }
